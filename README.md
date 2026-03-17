@@ -4,6 +4,16 @@ An AI-powered resume screening tool that parses resumes, extracts structured dat
 
 ---
 
+
+##  Live Demo & Documentation
+
+- **Demo Video**: https://www.loom.com/share/ebcb612f26bb40749b68f20aeb0db4e2  
+- **System Architecture & Design Docs**: https://docs.google.com/document/d/1daEb63q6vP3qx_mG2dwBYgjFdbZ-8CwP3CHwljhjC98/edit?usp=sharing  
+
+---
+
+## Pipeline of the project
+
 ## Features
 
 - **Multi-format parsing** — PDF and DOCX resumes
