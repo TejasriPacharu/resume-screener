@@ -98,7 +98,7 @@ def _infer_required_level(jd_text: str) -> str:
 
 def _apply_seniority_cap(score: int, yoe, jd_text: str) -> tuple:
     """
-    Enforce hard seniority caps in Python — not delegated to the LLM.
+    Enforce hard seniority caps in Python.
     Returns (final_score, cap_note_or_None).
     """
     if yoe is None or not isinstance(yoe, (int, float)):

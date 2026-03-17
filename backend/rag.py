@@ -77,7 +77,6 @@ def retrieve_relevant_chunks(resume_text: str, jd_text: str) -> list[dict]:
             if sim > chunk_max_scores[idx]:
                 chunk_max_scores[idx] = sim
 
-    # ✅ Stronger penalty
     PENALTY = 0.5
     for i, chunk in enumerate(chunks):
         if chunk["section"].lower() in LOW_SIGNAL_SECTIONS:
