@@ -78,25 +78,31 @@ Return this exact JSON:
                 "_parse_error": "Could not parse JSON from model output"}
 
 
-def _infer_required_level(jd_text: str) -> str:
-    """Classify the seniority level the JD is targeting."""
-    jd = jd_text.lower()
+def _infer_required_level(jd_text: str, role_name: str = "") -> str:
+    """
+    Classify the seniority level the JD is targeting.
+    Checks both the JD body AND the role name — many intern/entry-level
+    signals appear only in the title, not in the description.
+    """
+    combined = (jd_text + " " + role_name).lower()
     senior_signals = [
         "senior", "lead", "principal", "staff engineer", "manager",
         "5+ year", "5 years", "6 year", "7 year", "8 year", "10 year",
     ]
     fresher_signals = [
+        "intern", "internship", "co-op", "coop", "co op",
         "junior", "entry level", "entry-level", "fresher", "graduate",
-        "0-1 year", "intern", "trainee", "no experience required",
+        "0-1 year", "trainee", "no experience required",
+        "unpaid", "stipend", "learning period", "mentorship period",
     ]
-    if any(s in jd for s in senior_signals):
+    if any(s in combined for s in senior_signals):
         return "SENIOR"
-    if any(s in jd for s in fresher_signals):
+    if any(s in combined for s in fresher_signals):
         return "FRESHER"
     return "MID"
 
 
-def _apply_seniority_cap(score: int, yoe, jd_text: str) -> tuple:
+def _apply_seniority_cap(score: int, yoe, jd_text: str, role_name: str = "") -> tuple:
     """
     Enforce hard seniority caps in Python.
     Returns (final_score, cap_note_or_None).
@@ -104,7 +110,7 @@ def _apply_seniority_cap(score: int, yoe, jd_text: str) -> tuple:
     if yoe is None or not isinstance(yoe, (int, float)):
         return score, None
 
-    required_level = _infer_required_level(jd_text)
+    required_level = _infer_required_level(jd_text, role_name)
 
     if yoe <= 1.0:
         if required_level == "SENIOR":
@@ -224,7 +230,7 @@ Return this JSON:
     # Enforce seniority cap in Python — not delegated to the LLM
     raw_score = result.get("score")
     if isinstance(raw_score, (int, float)):
-        capped_score, cap_note = _apply_seniority_cap(int(raw_score), candidate_yoe, jd_text)
+        capped_score, cap_note = _apply_seniority_cap(int(raw_score), candidate_yoe, jd_text, role_name)
         if cap_note:
             result["score"] = capped_score
             result["justification"] = cap_note + " " + result.get("justification", "")
