@@ -4,7 +4,6 @@ An AI-powered resume screening tool that parses resumes, extracts structured dat
 
 ---
 
-
 ##  Live Demo & Documentation
 
 - **Demo Video**: https://www.loom.com/share/ebcb612f26bb40749b68f20aeb0db4e2  
@@ -13,6 +12,10 @@ An AI-powered resume screening tool that parses resumes, extracts structured dat
 ---
 
 ## Pipeline of the project
+
+![System Pipeline](./assets/pipeline.png)
+This diagram illustrates the complete flow of the resume screening system
+---
 
 ## Features
 
@@ -171,3 +174,9 @@ Each resume is scored on a **1–10 scale** per JD, twice:
 ```
 
 You can also manage this in the **Config** tab of the UI.
+
+---
+
+### Final Words 
+
+This assignment is developed as part of Sprint Hiring Process. Greatful for this opportunity.
