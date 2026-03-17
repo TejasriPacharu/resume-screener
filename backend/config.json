@@ -1,0 +1,11 @@
+{
+  "extract_fields": [
+    "name",
+    "years_of_experience",
+    "primary_skills",
+    "education",
+    "internships",
+    "projects",
+    "achievements"
+  ]
+}
