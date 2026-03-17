@@ -14,7 +14,7 @@ An AI-powered resume screening tool that parses resumes, extracts structured dat
 ## Pipeline of the project
 
 ![System Pipeline](./assets/pipeline.png)
-This diagram illustrates the complete flow of the resume screening system
+
 ---
 
 ## Features
