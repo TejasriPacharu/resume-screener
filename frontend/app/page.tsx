@@ -2,10 +2,9 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import ScreenView from "../components/ScreenView";
-import BatchView from "../components/BatchView";
 import ConfigView from "../components/ConfigView";
 
-type View = "screen" | "batch" | "config";
+type View = "screen" | "config";
 
 export default function Home() {
   const [view, setView] = useState<View>("screen");
@@ -15,7 +14,6 @@ export default function Home() {
       <Sidebar active={view} onChange={setView} />
       <main style={{ flex: 1, overflow: "auto" }}>
         {view === "screen" && <ScreenView />}
-        {view === "batch" && <BatchView />}
         {view === "config" && <ConfigView />}
       </main>
     </div>

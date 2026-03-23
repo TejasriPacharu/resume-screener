@@ -1,8 +1,7 @@
 import hashlib
 import json
-from pathlib import Path
 
-REGISTRY_PATH = Path(__file__).parent / "registry.json"
+from config import REGISTRY_PATH
 
 
 def _load() -> dict:

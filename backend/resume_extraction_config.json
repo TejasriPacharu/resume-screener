@@ -1,0 +1,36 @@
+{
+  "extract_fields": [
+    {
+      "field_name": "name",
+      "field_extraction_description": "Full name only. No email, no title."
+    },
+    {
+      "field_name": "email",
+      "field_extraction_description": "Exact email address as written. null if not found."
+    },
+    {
+      "field_name": "years_of_experience",
+      "field_extraction_description": "If stated explicitly (e.g. \"5 years of experience\"), use that number. If not stated, calculate from work history dates: Add up durations of all UNIQUE, non-overlapping roles only. If two roles overlap in time, count that period ONCE. Use 2025 as the current year if a role says \"Present\" or \"Current\". A student internship of 3 months = 0.25 years. Round to 1 decimal place. If no dates at all, return null. Do NOT guess."
+    },
+    {
+      "field_name": "primary_skills",
+      "field_extraction_description": "Return a flat list of specific technical skills only (languages, frameworks, tools, platforms). Do NOT include soft skills like \"communication\" or \"leadership\". Deduplicate. Normalise capitalisation (e.g. \"javascript\" -> \"JavaScript\")."
+    },
+    {
+      "field_name": "education",
+      "field_extraction_description": "Format as: \"Degree, Institution (Graduation Year)\". Graduation year = the END year of the degree, not the start year. Example: \"2022 - 2026\" means graduation year is 2026. If multiple degrees, return the highest qualification."
+    },
+    {
+      "field_name": "internships",
+      "field_extraction_description": "Return a list of objects: [{\"company\": ..., \"role\": ..., \"duration\": ..., \"technologies\": [...]}]. technologies = list of tools/languages mentioned for that role."
+    },
+    {
+      "field_name": "projects",
+      "field_extraction_description": "Return a list of objects: [{\"name\": ..., \"technologies\": [...]}]. technologies = list of tools/languages mentioned for that project."
+    },
+    {
+      "field_name": "phone",
+      "field_extraction_description": "Exact phone number as written. null if not found."
+    }
+  ]
+}

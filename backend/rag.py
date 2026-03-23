@@ -3,10 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from chunker import chunk_by_section
-
-EMBED_MODEL = "all-MiniLM-L6-v2"
-TOP_K = 3   # reduced
-LOW_SIGNAL_SECTIONS = {"technical skills", "skills", "education", "achievements", "general"}
+from config import EMBED_MODEL, RAG_TOP_K, LOW_SIGNAL_SECTIONS
 
 _embedder = None
 
@@ -82,7 +79,7 @@ def retrieve_relevant_chunks(resume_text: str, jd_text: str) -> list[dict]:
         if chunk["section"].lower() in LOW_SIGNAL_SECTIONS:
             chunk_max_scores[i] *= (1 - PENALTY)
 
-    top_indices = np.argsort(chunk_max_scores)[::-1][:TOP_K]
+    top_indices = np.argsort(chunk_max_scores)[::-1][:RAG_TOP_K]
 
     results = []
     for rank, idx in enumerate(top_indices):

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getConfig, updateConfig, clearAllDuplicates } from "../lib/api";
+import { getConfig, updateConfig, clearAllDuplicates, ResumeField } from "../lib/api";
 
-const DEFAULT_FIELDS = [
+const DEFAULT_FIELD_NAMES = [
   "name", "email", "phone", "years_of_experience", "primary_skills",
   "last_job_title", "education", "internships", "projects", "achievements",
   "authentication_experience", "ci_cd_tools",
@@ -19,7 +19,8 @@ const LABEL: React.CSSProperties = {
 };
 
 export default function ConfigView() {
-  const [fields, setFields] = useState<string[]>([]);
+  const [fields, setFields] = useState<ResumeField[]>([]);
+  const [initialFields, setInitialFields] = useState<ResumeField[]>([]);
   const [newField, setNewField] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [loading, setLoading] = useState(true);
@@ -27,28 +28,42 @@ export default function ConfigView() {
 
   useEffect(() => {
     getConfig()
-      .then((c) => setFields(c.extract_fields || []))
-      .catch(() => setFields(DEFAULT_FIELDS))
+      .then((c) => {
+        const loaded = c.extract_fields || [];
+        setFields(loaded);
+        setInitialFields(loaded);
+      })
+      .catch(() => {
+        const fallback = DEFAULT_FIELD_NAMES.map((n) => ({ field_name: n, field_extraction_description: "" }));
+        setFields(fallback);
+        setInitialFields(fallback);
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const toggle = (field: string) => {
-    setFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    );
+  const activeNames = fields.map((f) => f.field_name);
+
+  const toggle = (fieldName: string) => {
+    if (activeNames.includes(fieldName)) {
+      setFields((prev) => prev.filter((f) => f.field_name !== fieldName));
+    } else {
+      // Restore description from initialFields if available
+      const existing = initialFields.find((f) => f.field_name === fieldName);
+      setFields((prev) => [...prev, existing ?? { field_name: fieldName, field_extraction_description: "" }]);
+    }
     setStatus("idle");
   };
 
   const addField = () => {
-    const f = newField.trim().toLowerCase().replace(/\s+/g, "_");
-    if (!f || fields.includes(f)) return;
-    setFields((prev) => [...prev, f]);
+    const name = newField.trim().toLowerCase().replace(/\s+/g, "_");
+    if (!name || activeNames.includes(name)) return;
+    setFields((prev) => [...prev, { field_name: name, field_extraction_description: "" }]);
     setNewField("");
     setStatus("idle");
   };
 
-  const removeField = (field: string) => {
-    setFields((prev) => prev.filter((f) => f !== field));
+  const removeField = (fieldName: string) => {
+    setFields((prev) => prev.filter((f) => f.field_name !== fieldName));
     setStatus("idle");
   };
 
@@ -64,7 +79,7 @@ export default function ConfigView() {
   };
 
   const reset = () => {
-    setFields(DEFAULT_FIELDS);
+    setFields(initialFields);
     setStatus("idle");
   };
 
@@ -88,8 +103,8 @@ export default function ConfigView() {
     );
   }
 
-  // Which defaults are not currently in fields
-  const available = DEFAULT_FIELDS.filter((f) => !fields.includes(f));
+  // Which default names are not currently active
+  const available = DEFAULT_FIELD_NAMES.filter((n) => !activeNames.includes(n));
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 32px" }}>
@@ -122,7 +137,7 @@ export default function ConfigView() {
           )}
           {fields.map((f) => (
             <span
-              key={f}
+              key={f.field_name}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -136,9 +151,9 @@ export default function ConfigView() {
                 padding: "3px 8px",
               }}
             >
-              {f}
+              {f.field_name}
               <button
-                onClick={() => removeField(f)}
+                onClick={() => removeField(f.field_name)}
                 style={{
                   background: "none",
                   border: "none",
@@ -162,10 +177,10 @@ export default function ConfigView() {
         <div className="fade-up fade-up-2" style={{ marginBottom: 24 }}>
           <span style={LABEL}>Suggested Fields</span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {available.map((f) => (
+            {available.map((n) => (
               <button
-                key={f}
-                onClick={() => toggle(f)}
+                key={n}
+                onClick={() => toggle(n)}
                 style={{
                   background: "var(--surface-2)",
                   border: "1px dashed var(--border-accent)",
@@ -186,7 +201,7 @@ export default function ConfigView() {
                   (e.target as HTMLElement).style.color = "var(--text-muted)";
                 }}
               >
-                + {f}
+                + {n}
               </button>
             ))}
           </div>
@@ -337,7 +352,7 @@ export default function ConfigView() {
           How it works
         </p>
         <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
-          Selected fields are passed to the LLM extractor prompt. The more specific the fields, the more targeted the extraction. Custom fields are extracted as free-text. Changes are persisted in <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>config.json</code> on the backend.
+          Selected fields are passed to the LLM extractor prompt. The more specific the fields, the more targeted the extraction. Custom fields are extracted as free-text. Changes are persisted in <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>resume_extraction_config.json</code> on the backend.
         </p>
       </div>
     </div>

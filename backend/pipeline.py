@@ -4,14 +4,12 @@ Resume Screener Pipeline
 """
 
 import argparse
-import json
-import os
 import sys
 from pathlib import Path
 from datetime import datetime
 
-from dotenv import load_dotenv
 from groq import Groq
+from config import GROQ_API_KEY, load_extraction_config
 
 import parser as resume_parser
 import extractor
@@ -20,26 +18,17 @@ import duplicate
 import report
 import rag as rag_module
 
-load_dotenv()
-
 
 def get_client() -> Groq:
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    if not GROQ_API_KEY:
         print("Error: GROQ_API_KEY not found in environment. Add it to a .env file.")
         sys.exit(1)
-    return Groq(api_key=api_key)
-
-
-def load_config() -> dict:
-    config_path = Path(__file__).parent / "config.json"
-    with open(config_path) as f:
-        return json.load(f)
+    return Groq(api_key=GROQ_API_KEY)
 
 
 def process_single(client, resume_path: str, jd_paths: list[str], role_names: list[str], force: bool = False):
-    config = load_config()
-    fields = config.get("extract_fields", [])
+    config = load_extraction_config()
+    fields = config.extract_fields
 
     role_id = role_names[0] if role_names else "default"
     is_dup = duplicate.is_duplicate(resume_path, role_id)
@@ -61,7 +50,7 @@ def process_single(client, resume_path: str, jd_paths: list[str], role_names: li
         return
 
     # --- Extract ---
-    print(f"🔍 Extracting fields: {fields}")
+    print(f"🔍 Extracting fields: {[f.field_name for f in fields]}")
     extracted = extractor.extract(client, resume_text, fields)
     candidate_name = extracted.get("name", Path(resume_path).stem)
     print(f"   → Extracted profile for: {candidate_name}")

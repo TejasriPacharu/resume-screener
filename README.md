@@ -11,12 +11,6 @@ An AI-powered resume screening tool that parses resumes, extracts structured dat
 
 ---
 
-## Pipeline of the project
-
-![System Pipeline](./assets/pipeline.png)
-This diagram illustrates the complete flow of the resume screening system
----
-
 ## Features
 
 - **Multi-format parsing** — PDF and DOCX resumes
@@ -30,10 +24,6 @@ This diagram illustrates the complete flow of the resume screening system
 - **Batch processing** — Upload many resumes and screen them all in one shot
 - **Duplicate detection** — SHA-256 hashing prevents re-processing the same resume for the same role
 - **Re-parse support** — Clear the duplicate registry from Config UI after changing extraction fields
-
----
-
-
 
 ---
 
@@ -105,8 +95,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/screen` | Screen a single resume |
-| POST | `/batch` | Screen multiple resumes |
+| POST | `/screen` | Screening one more resumes against one or more JDS |
 | GET | `/config` | Get current extraction fields |
 | PUT | `/config` | Update extraction fields |
 | DELETE | `/duplicates` | Clear all duplicate registries |
@@ -167,8 +156,7 @@ Each resume is scored on a **1–10 scale** per JD, twice:
   "extract_fields": [
     "name", "email", "phone", "years_of_experience",
     "primary_skills", "last_job_title", "education",
-    "internships", "projects", "achievements",
-    "authentication_experience", "ci_cd_tools"
+    "internships", "projects", "achievements"
   ]
 }
 ```
@@ -179,4 +167,4 @@ You can also manage this in the **Config** tab of the UI.
 
 ### Final Words 
 
-This assignment is developed as part of Sprint Hiring Process. Greatful for this opportunity.
+This assignment is developed as part of Sprinto Hiring Process. Greatful for this opportunity.

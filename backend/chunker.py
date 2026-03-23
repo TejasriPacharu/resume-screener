@@ -1,17 +1,6 @@
 import re
 
-# Canonical section names we want to detect
-SECTION_KEYWORDS = [
-    "experience", "work experience", "professional experience", "employment history",
-    "projects", "personal projects", "academic projects", "project experience", "side projects",
-    "skills", "technical skills", "core competencies", "technologies",
-    "education", "academic background", "qualifications", "academics",
-    "certifications", "certificates", "licenses",
-    "achievements", "awards", "honors", "accomplishments",
-    "summary", "objective", "profile", "about me", "about",
-    "publications", "research", "volunteering", "interests", "activities",
-    "internships", "internship experience",
-]
+from config import SECTION_KEYWORDS
 
 
 def _normalize(text: str) -> str:

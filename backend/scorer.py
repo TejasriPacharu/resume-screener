@@ -1,7 +1,6 @@
 import json
 from groq import Groq
-
-MODEL = "llama-3.1-8b-instant"
+from config import LLM_MODEL
 
 
 def _parse_json_response(raw: str) -> dict:
@@ -63,7 +62,7 @@ Return this exact JSON:
 }}"""
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=LLM_MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -205,7 +204,7 @@ Return this JSON:
 }}"""
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=LLM_MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -227,7 +226,7 @@ Return this JSON:
             "_parse_error": "Parse failed"
         }
 
-    # Enforce seniority cap in Python — not delegated to the LLM
+    # Enforce seniority cap in Python — gaurd beyond the prompt
     raw_score = result.get("score")
     if isinstance(raw_score, (int, float)):
         capped_score, cap_note = _apply_seniority_cap(int(raw_score), candidate_yoe, jd_text, role_name)

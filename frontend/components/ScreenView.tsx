@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import JDEditor, { type JDEntry } from "./JDEditor";
 import ResultCard from "./ResultCard";
-import { screenResume } from "../lib/api";
+import { screenResumes } from "../lib/api";
 
 const PAGE_STYLE: React.CSSProperties = {
   maxWidth: 860,
@@ -22,27 +22,42 @@ const LABEL: React.CSSProperties = {
 
 export default function ScreenView() {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [jds, setJds] = useState<JDEntry[]>([{ role_name: "", jd_text: "" }]);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dupPrompt, setDupPrompt] = useState(false);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] || null);
-    setResult(null);
+  const addFiles = (incoming: File[]) => {
+    const valid = incoming.filter((f) => f.name.endsWith(".pdf") || f.name.endsWith(".docx"));
+    setFiles((prev) => {
+      const existing = new Set(prev.map((f) => f.name));
+      return [...prev, ...valid.filter((f) => !existing.has(f.name))];
+    });
+    setResults([]);
     setError(null);
+    // Reset so the same file can be re-added after removal
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(Array.from(e.target.files || []));
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const f = e.dataTransfer.files[0];
-    if (f) { setFile(f); setResult(null); setError(null); }
+    addFiles(Array.from(e.dataTransfer.files));
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setResults([]);
+    setError(null);
   };
 
   const submit = async (force = false) => {
-    if (!file) { setError("Please upload a resume file."); return; }
+    if (!files.length) { setError("Please upload at least one resume file."); return; }
     const invalidJD = jds.some((j) => !j.role_name.trim() || !j.jd_text.trim());
     if (invalidJD) { setError("Fill in all role names and JD text."); return; }
 
@@ -51,13 +66,14 @@ export default function ScreenView() {
     setDupPrompt(false);
 
     try {
-      const { status, data } = await screenResume(file, jds, force);
+      const { status, data } = await screenResumes(files, jds, force);
       if (status === 409) {
+        // Backend returns 409 only when a single file is a duplicate
         setDupPrompt(true);
       } else if (status !== 200) {
         setError(data.detail || "Unexpected error.");
       } else {
-        setResult(data);
+        setResults(data.results || []);
       }
     } catch {
       setError("Could not reach the API. Is the backend running?");
@@ -70,17 +86,17 @@ export default function ScreenView() {
     <div style={PAGE_STYLE}>
       <div className="fade-up">
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, marginBottom: 4 }}>
-          Screen Resume
+          Screen Resumes
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 32 }}>
-          Upload a resume and compare it against one or more job descriptions.
+          Upload one or more resumes and compare each against one or more job descriptions.
         </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
-        {/* Upload */}
+        {/* Upload drop zone */}
         <div className="fade-up fade-up-1">
-          <span style={LABEL}>Resume File</span>
+          <span style={LABEL}>Resume Files</span>
           <div
             onClick={() => fileRef.current?.click()}
             onDrop={handleDrop}
@@ -88,12 +104,12 @@ export default function ScreenView() {
             style={{
               border: "1px dashed var(--border-accent)",
               borderRadius: 10,
-              padding: "28px 20px",
+              padding: "20px",
               textAlign: "center",
               cursor: "pointer",
               background: "var(--surface)",
-              transition: "all 0.15s",
-              minHeight: 120,
+              transition: "border-color 0.15s",
+              minHeight: 100,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -106,25 +122,62 @@ export default function ScreenView() {
             <svg width="20" height="20" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            {file ? (
-              <span style={{ fontSize: 13, color: "var(--accent)", fontWeight: 500 }}>{file.name}</span>
-            ) : (
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                Drop .pdf or .docx, or click to browse
-              </span>
-            )}
-            <input ref={fileRef} type="file" accept=".pdf,.docx" style={{ display: "none" }} onChange={handleFile} />
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {files.length === 0
+                ? "Drop .pdf / .docx files here, or click to browse"
+                : "Drop more files or click to add more"}
+            </span>
+            <input ref={fileRef} type="file" accept=".pdf,.docx" multiple style={{ display: "none" }} onChange={handleFile} />
           </div>
+
+          {/* File list */}
+          {files.length > 0 && (
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+              {files.map((f, i) => (
+                <div
+                  key={f.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                  }}
+                >
+                  <span style={{
+                    fontSize: 12,
+                    color: "var(--text-muted)",
+                    fontFamily: "var(--font-mono)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: "85%",
+                  }}>
+                    {f.name}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                    style={{ background: "none", border: "none", color: "var(--text-dim)", cursor: "pointer", fontSize: 11, padding: 0, flexShrink: 0 }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Options */}
+        {/* Tips */}
         <div className="fade-up fade-up-2" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}>
           <span style={LABEL}>Quick tips</span>
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: 14 }}>
             <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
               {[
                 "Supports .pdf and .docx resumes",
-                "Add multiple JDs for multi-role ranking",
+                "Drop or browse to add multiple resumes",
+                "Each resume is scored against every JD",
                 "Scores use both extraction & RAG signals",
                 "Configure extracted fields in Config tab",
               ].map((tip, i) => (
@@ -143,37 +196,34 @@ export default function ScreenView() {
         <JDEditor entries={jds} onChange={setJds} />
       </div>
 
-      {/* Error / dup prompt */}
+      {/* Error */}
       {error && (
-        <div
-          style={{
-            background: "rgba(239,68,68,0.08)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            borderRadius: 8,
-            padding: "10px 14px",
-            fontSize: 12,
-            color: "var(--red)",
-            marginBottom: 14,
-          }}
-        >
+        <div style={{
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.3)",
+          borderRadius: 8,
+          padding: "10px 14px",
+          fontSize: 12,
+          color: "var(--red)",
+          marginBottom: 14,
+        }}>
           {error}
         </div>
       )}
 
+      {/* Duplicate prompt — only triggered for single-file submissions */}
       {dupPrompt && (
-        <div
-          style={{
-            background: "rgba(234,179,8,0.07)",
-            border: "1px solid rgba(234,179,8,0.3)",
-            borderRadius: 8,
-            padding: "12px 16px",
-            marginBottom: 14,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
+        <div style={{
+          background: "rgba(234,179,8,0.07)",
+          border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: 8,
+          padding: "12px 16px",
+          marginBottom: 14,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}>
           <span style={{ fontSize: 12, color: "var(--yellow)" }}>
             ⚠ This resume was already uploaded for this role. Re-process anyway?
           </span>
@@ -206,11 +256,30 @@ export default function ScreenView() {
         }}
       >
         {loading && <span className="spinner" style={{ width: 14, height: 14 }} />}
-        {loading ? "Screening…" : "Run Screening"}
+        {loading ? "Screening…" : `Run Screening${files.length > 1 ? ` (${files.length} resumes)` : ""}`}
       </button>
 
-      {/* Result */}
-      {result && <ResultCard result={result} />}
+      {/* Results — one ResultCard per resume */}
+      {results.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {results.map((r, i) =>
+            r.error ? (
+              <div key={i} style={{
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: 8,
+                padding: "10px 14px",
+                fontSize: 12,
+                color: "var(--red)",
+              }}>
+                <strong>{r.filename}</strong>: {r.error}
+              </div>
+            ) : (
+              <ResultCard key={i} result={r} />
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
