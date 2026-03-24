@@ -9,12 +9,20 @@
       "field_extraction_description": "Exact email address as written. null if not found."
     },
     {
+      "field_name": "phone",
+      "field_extraction_description": "Exact phone number as written. null if not found."
+    },
+    {
       "field_name": "years_of_experience",
       "field_extraction_description": "If stated explicitly (e.g. \"5 years of experience\"), use that number. If not stated, calculate from work history dates: Add up durations of all UNIQUE, non-overlapping roles only. If two roles overlap in time, count that period ONCE. Use 2025 as the current year if a role says \"Present\" or \"Current\". A student internship of 3 months = 0.25 years. Round to 1 decimal place. If no dates at all, return null. Do NOT guess."
     },
     {
       "field_name": "primary_skills",
       "field_extraction_description": "Return a flat list of specific technical skills only (languages, frameworks, tools, platforms). Do NOT include soft skills like \"communication\" or \"leadership\". Deduplicate. Normalise capitalisation (e.g. \"javascript\" -> \"JavaScript\")."
+    },
+    {
+      "field_name": "last_job_title",
+      "field_extraction_description": "Most recent job title only, exactly as written on the resume. Do not paraphrase or generalise."
     },
     {
       "field_name": "education",
@@ -29,8 +37,8 @@
       "field_extraction_description": "Return a list of objects: [{\"name\": ..., \"technologies\": [...]}]. technologies = list of tools/languages mentioned for that project."
     },
     {
-      "field_name": "phone",
-      "field_extraction_description": "Exact phone number as written. null if not found."
+      "field_name": "achievements",
+      "field_extraction_description": "One string summarising notable achievements, hackathons, publications, or awards. null if none."
     }
   ]
 }
